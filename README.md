@@ -2,7 +2,7 @@
 
 ## Repository Link
 
-[https://github.com/HannesMK/plain-language-classification]
+https://github.com/HannesMK/plain-language-classification
 
 ## Description
 
