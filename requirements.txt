@@ -1,0 +1,9 @@
+matplotlib
+nltk
+numpy
+pandas
+scikit-learn
+tensorflow
+tensorflow_hub
+tf-keras
+transformers
