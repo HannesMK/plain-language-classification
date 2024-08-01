@@ -1,6 +1,7 @@
 from typing import Any, List
 
 import numpy as np
+import pandas as pd
 import sklearn.metrics
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -229,7 +230,7 @@ def evaluate_model(
 
 
 def plot_accuracy(
-    history: tf.keras.callbacks.History,
+    data_history: pd.DataFrame,
     y_limits: tuple | None = None,
     x_ticks: list | None = None,
     y_ticks: list | None = None,
@@ -243,8 +244,8 @@ def plot_accuracy(
 
     Parameters
     ----------
-    history : tf.keras.callbacks.History
-        Training history of the model
+    data_history : pd.DataFrame
+        Data frame containing the training history of the model
     y_limits : list | None, optional
         Limits of the y axis
     x_ticks : list | None, optional
@@ -271,11 +272,16 @@ def plot_accuracy(
 
     figure.set_size_inches(width_in_inches, height_in_inches)
 
-    epochs = [epoch + 1 for epoch in history.epoch]
+    epochs = [epoch + 1 for epoch in data_history.index]
 
-    axes.plot(epochs, history.history["binary_accuracy"], label="Training")
-    axes.plot(epochs, history.history["val_binary_accuracy"], label="Validation")
-
+    if len(epochs) == 1:
+        marker = "o"
+    else:
+        marker = ""
+    
+    axes.plot(epochs, data_history["binary_accuracy"], label="Training", marker=marker)
+    axes.plot(epochs, data_history["val_binary_accuracy"], label="Validation", marker=marker)
+    
     axes.set_xlabel("Epoch")
     axes.set_ylabel("Accuracy")
 
@@ -296,7 +302,7 @@ def plot_accuracy(
 
 
 def plot_loss(
-    history: tf.keras.callbacks.History,
+    data_history: pd.DataFrame,
     y_limits: tuple | None = None,
     x_ticks: list | None = None,
     y_ticks: list | None = None,
@@ -310,8 +316,8 @@ def plot_loss(
 
     Parameters
     ----------
-    history : tf.keras.callbacks.History
-        Training history of the model
+    data_history : pd.DataFrame
+        Data frame containing the training history of the model
     y_limits : list | None, optional
         Limits of the y axis
     x_ticks : list | None, optional
@@ -338,10 +344,15 @@ def plot_loss(
 
     figure.set_size_inches(width_in_inches, height_in_inches)
 
-    epochs = [epoch + 1 for epoch in history.epoch]
+    epochs = [epoch + 1 for epoch in data_history.index]
 
-    axes.plot(epochs, history.history["loss"], label="Training")
-    axes.plot(epochs, history.history["val_loss"], label="Validation")
+    if len(epochs) == 1:
+        marker = "o"
+    else:
+        marker = ""
+    
+    axes.plot(epochs, data_history["loss"], label="Training", marker=marker)
+    axes.plot(epochs, data_history["val_loss"], label="Validation", marker=marker)
 
     axes.set_xlabel("Epoch")
     axes.set_ylabel("Loss")
