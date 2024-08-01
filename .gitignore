@@ -1,3 +1,7 @@
+# Large files (NNLM and GBERT model)
+saved_models/gbert/tf_model.h5
+saved_models/nnlm/weights_nnlm.h5
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
