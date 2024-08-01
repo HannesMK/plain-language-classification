@@ -5,13 +5,8 @@ import sklearn.metrics
 import tensorflow as tf
 import tensorflow_hub as hub
 import tf_keras
+import transformers
 from matplotlib import pyplot as plt
-from transformers import (
-    BertTokenizer,
-    PreTrainedTokenizer,
-    PreTrainedTokenizerFast,
-    TFBertForSequenceClassification,
-)
 
 
 def build_model_baseline(
@@ -71,76 +66,6 @@ def build_model_baseline(
     )
 
     return model
-
-
-def build_model_gbert(
-    x_training: List[str],
-    x_validation: List[str],
-    y_training: List[int],
-    y_validation: List[int],
-    maximum_sequence_length: int,
-    model_name: str = "deepset/gbert-base",
-) -> tuple:
-    """
-    Builds the fine-tuned German BERT model
-
-    Parameters
-    ----------
-    x_training : List[str]
-        List of the training values
-    x_validation : List[str]
-        List of the validation values
-    y_training : List[int]
-        List of the training labels
-    y_validation : List[int]
-        List of the validation labels
-    maximum_sequence_length : int
-        Length to which to truncate and pad sequences to
-    model_name : str, optional
-        Name of the pre-trained model to load, by default "deepset/gbert-base"
-
-    Returns
-    -------
-    tuple
-        (data_training, data_validation, model)
-    """
-    tokenizer = BertTokenizer.from_pretrained(model_name)
-
-    def tokenize_text(
-        texts: List[str],
-        tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast,
-        maximum_sequence_length: int,
-    ):
-        encoded_texts = tokenizer(
-            texts,
-            truncation=True,
-            padding=True,
-            max_length=maximum_sequence_length,
-        )
-
-        return encoded_texts
-
-    encodings_training = tokenize_text(
-        texts=x_training,
-        tokenizer=tokenizer,
-        maximum_sequence_length=maximum_sequence_length,
-    )
-    encodings_validation = tokenize_text(
-        texts=x_validation,
-        tokenizer=tokenizer,
-        maximum_sequence_length=maximum_sequence_length,
-    )
-
-    data_training = tf.data.Dataset.from_tensor_slices(
-        (dict(encodings_training), y_training)
-    )
-    data_validation = tf.data.Dataset.from_tensor_slices(
-        (dict(encodings_validation), y_validation)
-    )
-
-    model = TFBertForSequenceClassification.from_pretrained(model_name, num_labels=1)
-
-    return data_training, data_validation, model
 
 
 def build_model_lstm(
@@ -269,7 +194,7 @@ def evaluate_model(
     model: (
         tf.keras.models.Sequential
         | tf_keras.models.Sequential
-        | TFBertForSequenceClassification
+        | transformers.TFBertForSequenceClassification
     ),
     x_test: Any,
     y_test: Any,
@@ -282,7 +207,7 @@ def evaluate_model(
     model : tf.keras.models.Sequential | tf_keras.models.Sequential | TFBertForSequenceClassification
         Model to be evaluated
     x_test : Any
-        List/array of the test values
+        List/array/dataset of the test values
     y_test : Any
         List/array of the test labels
 
@@ -291,7 +216,12 @@ def evaluate_model(
     float
         Accuracy score
     """
-    y_predicted = np.round(model.predict(x_test))
+    y_predicted = model.predict(x_test)
+    
+    if type(y_predicted) == transformers.modeling_tf_outputs.TFSequenceClassifierOutput:
+        y_predicted = tf.nn.sigmoid(y_predicted["logits"])
+        
+    y_predicted = np.round(y_predicted)
 
     accuracy = sklearn.metrics.accuracy_score(y_true=y_test, y_pred=y_predicted)
 
@@ -301,6 +231,7 @@ def evaluate_model(
 def plot_accuracy(
     history: tf.keras.callbacks.History,
     y_limits: tuple | None = None,
+    x_ticks: list | None = None,
     y_ticks: list | None = None,
     location_legend: str = "lower right",
     font_size: int = 18,
@@ -316,6 +247,8 @@ def plot_accuracy(
         Training history of the model
     y_limits : list | None, optional
         Limits of the y axis
+    x_ticks : list | None, optional
+        Ticks of the x axes
     y_ticks : list | None, optional
         Ticks of the y axes
     location_legend : str, optional
@@ -351,6 +284,9 @@ def plot_accuracy(
     if y_limits is not None:
         axes.set_ylim(y_limits)
 
+    if x_ticks is not None:
+        axes.set_xticks(x_ticks)
+
     if y_ticks is not None:
         axes.set_yticks(y_ticks)
 
@@ -361,7 +297,8 @@ def plot_accuracy(
 
 def plot_loss(
     history: tf.keras.callbacks.History,
-    y_limits: list | None = None,
+    y_limits: tuple | None = None,
+    x_ticks: list | None = None,
     y_ticks: list | None = None,
     location_legend: str = "upper right",
     font_size: int = 18,
@@ -377,6 +314,8 @@ def plot_loss(
         Training history of the model
     y_limits : list | None, optional
         Limits of the y axis
+    x_ticks : list | None, optional
+        Ticks of the x axes
     y_ticks : list | None, optional
         Ticks of the y axes
     location_legend : str, optional
@@ -412,9 +351,51 @@ def plot_loss(
     if y_limits is not None:
         axes.set_ylim(y_limits)
 
+    if x_ticks is not None:
+        axes.set_xticks(x_ticks)
+
     if y_ticks is not None:
         axes.set_yticks(y_ticks)
 
     axes.legend(loc=location_legend)
 
     return figure, axes
+
+
+def tokenize_text_gbert(
+    texts: List[str],
+    labels: List[int],
+    maximum_sequence_length: int,
+    model_name: str = "deepset/gbert-base",
+) -> tf.data.Dataset:
+    """
+    Prepares tokenized datasets of texts and labels for the German BERT model
+
+    Parameters
+    ----------
+    texts : List[str]
+        List of the text values
+    labels : List[int]
+        List of the labels
+    maximum_sequence_length : int
+        Length to which to truncate and pad sequences to
+    model_name : str, optional
+        Name of the pre-trained model to load, by default "deepset/gbert-base"
+
+    Returns
+    -------
+    tf.data.Dataset
+        Dataset containing the encoded texts and the labels
+    """
+    tokenizer = transformers.BertTokenizer.from_pretrained(model_name)
+
+    encoded_texts = tokenizer(
+        texts,
+        truncation=True,
+        padding=True,
+        max_length=maximum_sequence_length,
+    )
+
+    data = tf.data.Dataset.from_tensor_slices((dict(encoded_texts), labels))
+
+    return data
