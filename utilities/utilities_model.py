@@ -10,6 +10,84 @@ import transformers
 from matplotlib import pyplot as plt
 
 
+def _plot_history(
+    data_history: pd.DataFrame,
+    metric_training: str,
+    metric_validation: str,
+    y_limits: tuple | None,
+    x_ticks: list | None,
+    y_ticks: list | None,
+    location_legend: str,
+    font_size: int,
+    width_in_inches: float,
+    height_in_inches: float,
+) -> tuple:
+    """
+    Helper function that creates a plot showing training and validation metrics over the course of the training epochs
+
+    Parameters
+    ----------
+    data_history : pd.DataFrame
+        Data frame containing the training history of the model
+    metric_training : str
+        Name of the training metric
+    metric_validation : str
+        Name of the validation metric
+    y_limits : list | None
+        Limits of the y axis
+    x_ticks : list | None
+        Ticks of the x axes
+    y_ticks : list | None
+        Ticks of the y axes
+    location_legend : str
+        {"upper left", "upper right", "lower left", "lower right"}, location of the legend
+    font_size : int
+        Base size of the font, passed to plt.rcParams["font_size"]
+    width_in_inches : float
+        Width of the figure in inches
+    height_in_inches : float
+        Height of the figure in inches
+
+    Returns
+    -------
+    tuple
+        (figure, axes)
+    """
+    plt.rcParams["font.size"] = font_size
+
+    figure, axes = plt.subplots()
+
+    figure.set_size_inches(width_in_inches, height_in_inches)
+
+    epochs = [epoch + 1 for epoch in data_history.index]
+
+    if len(epochs) == 1:
+        marker = "o"
+    else:
+        marker = ""
+    
+    axes.plot(epochs, data_history[metric_training], label="Training", marker=marker)
+    axes.plot(epochs, data_history[metric_validation], label="Validation", marker=marker)
+
+    axes.set_xlabel("Epoch")
+    axes.set_ylabel("Loss")
+
+    axes.set_xticks(epochs)
+
+    if y_limits is not None:
+        axes.set_ylim(y_limits)
+
+    if x_ticks is not None:
+        axes.set_xticks(x_ticks)
+
+    if y_ticks is not None:
+        axes.set_yticks(y_ticks)
+
+    axes.legend(loc=location_legend)
+
+    return figure, axes
+
+
 def build_model_baseline(
     x_training: Any,
     vocabulary_size: int,
@@ -266,38 +344,20 @@ def plot_accuracy(
     tuple
         (figure, axes)
     """
-    plt.rcParams["font.size"] = font_size
-
-    figure, axes = plt.subplots()
-
-    figure.set_size_inches(width_in_inches, height_in_inches)
-
-    epochs = [epoch + 1 for epoch in data_history.index]
-
-    if len(epochs) == 1:
-        marker = "o"
-    else:
-        marker = ""
     
-    axes.plot(epochs, data_history["binary_accuracy"], label="Training", marker=marker)
-    axes.plot(epochs, data_history["val_binary_accuracy"], label="Validation", marker=marker)
+    figure, axes = _plot_history(
+        data_history=data_history,
+        metric_training="binary_accuracy",
+        metric_validation="val_binary_accuracy",
+        y_limits=y_limits,
+        x_ticks=x_ticks,
+        y_ticks=y_ticks,
+        location_legend=location_legend,
+        font_size=font_size,
+        width_in_inches=width_in_inches,
+        height_in_inches=height_in_inches,
+    )
     
-    axes.set_xlabel("Epoch")
-    axes.set_ylabel("Accuracy")
-
-    axes.set_xticks(epochs)
-
-    if y_limits is not None:
-        axes.set_ylim(y_limits)
-
-    if x_ticks is not None:
-        axes.set_xticks(x_ticks)
-
-    if y_ticks is not None:
-        axes.set_yticks(y_ticks)
-
-    axes.legend(loc=location_legend)
-
     return figure, axes
 
 
@@ -395,38 +455,20 @@ def plot_loss(
     tuple
         (figure, axes)
     """
-    plt.rcParams["font.size"] = font_size
-
-    figure, axes = plt.subplots()
-
-    figure.set_size_inches(width_in_inches, height_in_inches)
-
-    epochs = [epoch + 1 for epoch in data_history.index]
-
-    if len(epochs) == 1:
-        marker = "o"
-    else:
-        marker = ""
     
-    axes.plot(epochs, data_history["loss"], label="Training", marker=marker)
-    axes.plot(epochs, data_history["val_loss"], label="Validation", marker=marker)
-
-    axes.set_xlabel("Epoch")
-    axes.set_ylabel("Loss")
-
-    axes.set_xticks(epochs)
-
-    if y_limits is not None:
-        axes.set_ylim(y_limits)
-
-    if x_ticks is not None:
-        axes.set_xticks(x_ticks)
-
-    if y_ticks is not None:
-        axes.set_yticks(y_ticks)
-
-    axes.legend(loc=location_legend)
-
+    figure, axes = _plot_history(
+        data_history=data_history,
+        metric_training="loss",
+        metric_validation="val_loss",
+        y_limits=y_limits,
+        x_ticks=x_ticks,
+        y_ticks=y_ticks,
+        location_legend=location_legend,
+        font_size=font_size,
+        width_in_inches=width_in_inches,
+        height_in_inches=height_in_inches,
+    )
+    
     return figure, axes
 
 
