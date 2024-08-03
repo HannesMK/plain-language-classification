@@ -70,7 +70,6 @@ def _plot_history(
     axes.plot(epochs, data_history[metric_validation], label="Validation", marker=marker)
 
     axes.set_xlabel("Epoch")
-    axes.set_ylabel("Loss")
 
     axes.set_xticks(epochs)
 
@@ -358,6 +357,8 @@ def plot_accuracy(
         height_in_inches=height_in_inches,
     )
     
+    axes.set_ylabel("Accuracy")
+    
     return figure, axes
 
 
@@ -468,6 +469,8 @@ def plot_loss(
         width_in_inches=width_in_inches,
         height_in_inches=height_in_inches,
     )
+    
+    axes.set_ylabel("Loss")
     
     return figure, axes
 
