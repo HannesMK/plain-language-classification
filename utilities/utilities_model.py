@@ -199,7 +199,7 @@ def evaluate_model(
     ),
     x_test: Any,
     y_test: Any,
-) -> float:
+) -> tuple:
     """
     Evaluates how accurately a given model predicts data from the test set
 
@@ -214,8 +214,8 @@ def evaluate_model(
 
     Returns
     -------
-    float
-        Accuracy score
+    tuple
+        y_predicted, accuracy
     """
     y_predicted = model.predict(x_test)
     
@@ -226,7 +226,7 @@ def evaluate_model(
 
     accuracy = sklearn.metrics.accuracy_score(y_true=y_test, y_pred=y_predicted)
 
-    return float(accuracy)
+    return y_predicted, float(accuracy)
 
 
 def plot_accuracy(
@@ -299,6 +299,63 @@ def plot_accuracy(
     axes.legend(loc=location_legend)
 
     return figure, axes
+
+
+def plot_confusion_matrix(
+    y_true: Any,
+    y_predicted: Any,
+    title: str | None = None,
+    font_size: int = 18,
+    width_in_inches: float = 7,
+    height_in_inches: float = 6,
+):
+    """
+    Creates a plot showing the confusion matrix for the given true and predicted labels
+
+    Parameters
+    ----------
+    y_true : Any
+        List/array of the true labels
+    y_predicted : Any
+        List/array of the predicted labels
+    title : str | None, optional
+        Title to add to the figure, by default None
+    font_size : int, optional
+        Base size of the font, passed to plt.rcParams["font_size"], by default 18
+    width_in_inches : float, optional
+        Width of the figure in inches, by default 7
+    height_in_inches : float, optional
+        Height of the figure in inches, by default 6
+    
+    Returns
+    -------
+    tuple
+        (figure, axes)
+    """
+    plt.rcParams["font.size"] = font_size
+    
+    confusion_matrix = sklearn.metrics.confusion_matrix(
+        y_true=y_true,
+        y_pred=y_predicted,
+        normalize="all",
+    )
+    
+    display = sklearn.metrics.ConfusionMatrixDisplay(
+        confusion_matrix=confusion_matrix,
+        display_labels=["Regular", "Plain"],
+    )
+    
+    display.plot()
+    
+    display.figure_.set_size_inches(width_in_inches, height_in_inches)
+    
+    display.ax_.set_xlabel("Predicted Label")
+    display.ax_.set_ylabel("True Label")
+    
+    if title is not None:
+        display.ax_.set_title(title)
+    
+    return display.figure_, display.ax_
 
 
 def plot_loss(

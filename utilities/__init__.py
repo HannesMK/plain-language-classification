@@ -10,6 +10,7 @@ from .utilities_model import (
     build_model_nnlm,
     evaluate_model,
     plot_accuracy,
+    plot_confusion_matrix,
     plot_loss,
     tokenize_text_gbert,
 )
