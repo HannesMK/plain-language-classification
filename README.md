@@ -16,7 +16,7 @@ Binary Text-Classification
 
 - **Best Model:** Fine-tuned German BERT
 - **Evaluation Metric:** Accuracy
-- **Result:** 93% Accuracy
+- **Result:** 93.6% Accuracy
 
 ## Documentation
 
